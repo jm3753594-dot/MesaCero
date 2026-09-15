@@ -1,20 +1,332 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
+<ion-header class="ion-no-border">
+  <ion-toolbar class="barra-superior">
     <ion-title>
-      Blank
+      <div class="titulo-app">
+        <strong>MesaCero</strong>
+        <span>Lista compartida</span>
+      </div>
     </ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
+  <div class="contenedor">
 
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
+    <!-- Encabezado de la lista -->
+    <section class="encabezado-lista">
+      <p class="etiqueta">LISTA ACTUAL</p>
+
+      <h1>{{ nombreLista }}</h1>
+
+      <div class="estado-conexion">
+        <span class="punto-estado"></span>
+
+        <div>
+          <strong>Conectividad cercana</strong>
+          <p>{{ estadoConexion }}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Lista de artículos -->
+    <section class="seccion-articulos">
+
+      <div class="titulo-seccion">
+        <div>
+          <h2>Artículos</h2>
+          <p>
+            {{ articulos.length }}
+            elementos en la lista
+          </p>
+        </div>
+
+        <ion-badge color="light">
+          {{ articulos.length }}
+        </ion-badge>
+      </div>
+
+      <ion-list
+        lines="none"
+        class="lista-articulos">
+
+        <ion-item
+          *ngFor="let articulo of articulos"
+          class="articulo">
+
+          <ion-checkbox
+            slot="start"
+            [checked]="articulo.conseguido"
+            (click)="$event.preventDefault(); cambiarEstado(articulo)"
+            aria-label="Cambiar estado del artículo">
+          </ion-checkbox>
+
+          <ion-label>
+            <h3
+              [class.conseguido]="articulo.conseguido">
+              {{ articulo.nombre }}
+            </h3>
+
+            <p *ngIf="articulo.conseguido">
+              Conseguido
+            </p>
+
+            <p *ngIf="!articulo.conseguido">
+              Pendiente
+            </p>
+          </ion-label>
+
+          <div class="cantidad">
+            x{{ articulo.cantidad }}
+          </div>
+
+          <ion-button
+            fill="clear"
+            color="danger"
+            class="boton-eliminar"
+            (click)="eliminarArticulo(articulo.id)"
+            aria-label="Eliminar artículo">
+
+            <ion-icon
+              slot="icon-only"
+              name="trash-outline">
+            </ion-icon>
+
+          </ion-button>
+
+        </ion-item>
+
+      </ion-list>
+    </section>
+
+    <!-- Dispositivos Bluetooth LE cercanos -->
+    <section class="seccion-dispositivos">
+
+      <div class="titulo-seccion">
+        <div>
+          <h2>Dispositivos cercanos</h2>
+
+          <p>
+            {{ dispositivosBle.length }}
+            dispositivo(s) BLE detectado(s)
+          </p>
+        </div>
+
+        <ion-badge color="light">
+          {{ dispositivosBle.length }}
+        </ion-badge>
+      </div>
+
+      <!-- Estado cuando todavía no se detectan dispositivos -->
+      <div
+        *ngIf="dispositivosBle.length === 0"
+        class="sin-dispositivos">
+
+        <ion-icon
+          name="bluetooth-outline">
+        </ion-icon>
+
+        <div>
+          <strong>
+            Sin dispositivos detectados
+          </strong>
+
+          <p>
+            Pulsa "Compartir cerca" para buscar
+            dispositivos Bluetooth LE.
+          </p>
+        </div>
+
+      </div>
+
+      <!-- Resultados reales del escaneo BLE -->
+      <ion-list
+        *ngIf="dispositivosBle.length > 0"
+        lines="none"
+        class="lista-dispositivos">
+
+        <ion-item
+          *ngFor="let dispositivo of dispositivosBle"
+          class="dispositivo-ble">
+
+          <div
+            slot="start"
+            class="icono-bluetooth">
+
+            <ion-icon
+              name="bluetooth-outline">
+            </ion-icon>
+
+          </div>
+
+          <ion-label>
+
+            <h3>
+              {{ dispositivo.nombre }}
+            </h3>
+
+            <p class="identificador-dispositivo">
+              ID: {{ dispositivo.id }}
+            </p>
+
+            <p *ngIf="dispositivo.rssi !== undefined">
+              Señal:
+              {{ dispositivo.rssi }} dBm
+            </p>
+
+            <p *ngIf="dispositivo.rssi === undefined">
+              Señal no disponible
+            </p>
+
+          </ion-label>
+
+        </ion-item>
+
+      </ion-list>
+
+    </section>
+
+    <!-- Formulario para agregar artículos -->
+    <section
+      *ngIf="mostrarFormulario"
+      class="formulario-articulo">
+
+      <div class="formulario-cabecera">
+
+        <div>
+          <h2>Agregar artículo</h2>
+
+          <p>
+            Completa los datos del nuevo material.
+          </p>
+        </div>
+
+        <ion-button
+          fill="clear"
+          color="medium"
+          (click)="cancelarFormulario()">
+
+          <ion-icon
+            slot="icon-only"
+            name="close-outline">
+          </ion-icon>
+
+        </ion-button>
+
+      </div>
+
+      <ion-item
+        class="campo"
+        lines="none">
+
+        <ion-input
+          label="Nombre del artículo"
+          labelPlacement="stacked"
+          placeholder="Ej. Cuaderno"
+          [(ngModel)]="nuevoArticulo">
+        </ion-input>
+
+      </ion-item>
+
+      <ion-item
+        class="campo"
+        lines="none">
+
+        <ion-input
+          type="number"
+          min="1"
+          label="Cantidad"
+          labelPlacement="stacked"
+          [(ngModel)]="nuevaCantidad">
+        </ion-input>
+
+      </ion-item>
+
+      <ion-button
+        expand="block"
+        class="boton-guardar"
+        (click)="agregarArticulo()">
+
+        Guardar artículo
+
+      </ion-button>
+
+    </section>
+
+    <!-- Mensajes del sistema -->
+    <p
+      *ngIf="mensajeSistema"
+      class="mensaje-sistema">
+
+      {{ mensajeSistema }}
+
+    </p>
+
+    <!-- Acciones principales -->
+    <section class="acciones">
+
+      <ion-button
+        *ngIf="!mostrarFormulario"
+        expand="block"
+        class="boton-principal"
+        (click)="abrirFormulario()">
+
+        <ion-icon
+          slot="start"
+          name="add-outline">
+        </ion-icon>
+
+        Agregar artículo
+
+      </ion-button>
+
+      <ion-button
+        expand="block"
+        fill="outline"
+        class="boton-ble"
+        (click)="compartirCerca()">
+
+        <ion-icon
+          slot="start"
+          name="bluetooth-outline">
+        </ion-icon>
+
+        Compartir cerca
+
+      </ion-button>
+
+      <ion-button
+        expand="block"
+        fill="outline"
+        class="boton-nfc"
+        (click)="leerEtiquetaNfc()">
+
+        <ion-icon
+          slot="start"
+          name="wifi-outline">
+        </ion-icon>
+
+        Leer etiqueta NFC
+
+      </ion-button>
+
+    </section>
+
+    <!-- Información de la aplicación -->
+    <div class="pie-informativo">
+
+      <ion-icon
+        name="cube-outline">
+      </ion-icon>
+
+      <div>
+        <strong>MesaCero</strong>
+
+        <p>
+          Coordina materiales y tareas con personas cercanas.
+        </p>
+      </div>
+
+    </div>
+
   </div>
 </ion-content>
